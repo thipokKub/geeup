@@ -13,14 +13,22 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
 pathway=os.path.dirname(os.path.realpath(__file__))
-def authenticate():
-    authorization_url="https://code.earthengine.google.com"
-    try:
-        uname=str(raw_input("Enter your Username:  "))
-    except Exception as e:
-        uname=str(input("Enter your Username:  "))
-    passw=str(getpass.getpass("Enter your Password:  "))
+def authenticate(username = None, password = None):
+    authorization_url = "https://code.earthengine.google.com"
+    if username is None:
+        try:
+            uname = str(raw_input("Enter your Username:  "))
+        except Exception as e:
+            uname = str(input("Enter your Username:  "))
+    else:
+        uname = username
+    
+    if password is None:
+        passw = str(getpass.getpass("Enter your Password:  "))
+    else:
+        passw = password
     options=Options()
+
     if os.name=="nt":
         driver = Firefox(executable_path=os.path.join(pathway,"geckodriver.exe"),firefox_options=options)
     else:

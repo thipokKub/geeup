@@ -56,6 +56,8 @@ from batch_remover import delete
 from sel_tuploader import seltabup
 from zipfiles import zipshape
 from getmeta import getmeta
+from config import get_credential
+
 lpath=os.path.dirname(os.path.realpath(__file__))
 sys.path.append(lpath)
 
@@ -75,7 +77,11 @@ def selsetup():
     os.system("python sel_setup.py")
 
 def selsetup_from_parser(args):
-    selsetup()
+    if args.credential is not None:
+        username, password = get_credential(args.credential)
+    else:
+        username, password = None
+    selsetup(username, password)
 
 suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 def humansize(nbytes):
@@ -121,9 +127,18 @@ def upload_from_parser(args):
            nodata_value=args.nodata)
 
 def seltabup_from_parser(args):
-    seltabup(uname=args.user,
+    if args.credential is not None:
+        username, password = get_credential(args.credential)
+        seltabup(uname=username,
            dirc=args.source,
-           destination=args.dest)
+           destination=args.dest,
+           passw=password)
+    else:
+        seltabup(uname=args.user,
+           dirc=args.source,
+           destination=args.dest,
+           passw=args.password)
+
 def tasks():
     statuses=ee.data.getTaskList()
     st=[]
@@ -152,6 +167,8 @@ def main(args=None):
 
     parser_selsetup = subparsers.add_parser('selsetup', help='Non headless setup for new google account, use if upload throws errors')
     parser_selsetup.set_defaults(func=selsetup_from_parser)
+    optional_named = parser_selsetup.add_argument_group('Optional named arguments')
+    optional_named.add_argument('--credential', help='credential file full path', default=None)
 
     parser_quota = subparsers.add_parser('quota', help='Print Earth Engine total quota and used quota')
     parser_quota.set_defaults(func=quota_from_parser)
@@ -183,7 +200,11 @@ def main(args=None):
     required_named = parser_seltabup.add_argument_group('Required named arguments.')
     required_named.add_argument('--source', help='Path to the directory with zipped folder for upload.', required=True)
     required_named.add_argument('--dest', help='Destination. Full path for upload to Google Earth Engine, e.g. users/pinkiepie/myponycollection', required=True)
-    required_named.add_argument('-u', '--user', help='Google account name (gmail address).')
+    required_named.add_argument('-u', '--user', help='Google account name (gmail address).', required=True)
+    optional_named = parser_seltabup.add_argument_group('Optional named arguments')
+    optional_named.add_argument('-p', '--password', help='Google account plain password', default=None)
+    optional_named.add_argument('--credential', help='credential file full path', default=None)
+
     parser_seltabup.set_defaults(func=seltabup_from_parser)
 
     parser_tasks=subparsers.add_parser('tasks',help='Queries current task status [completed,running,ready,failed,cancelled]')
